@@ -1,0 +1,175 @@
+;;; -*- lexical-binding: t -*-
+;;; emacs-djira.el --- djira client for emacs
+
+;; $Id:$
+
+;; Emacs List Archive Entry
+;; Filename: emacs-djira.el
+;; Version: $Revision:$
+;; Keywords:
+;; Author: Alexis Roda <alexis.roda.villalonga@gmail.com>
+;; Maintainer: Alexis Roda <alexis.roda.villalonga@gmail.com>
+;; Created: 2018-08-23
+;; Description:
+;; URL:
+;; Compatibility: Emacs24
+
+;; COPYRIGHT NOTICE
+;;
+;; This program is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation; either version 2 of the
+;; License, or (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+;; General Public License for more
+;; details. http://www.gnu.org/copyleft/gpl.html
+
+;;; Install:
+
+;; Put this file on your Emacs-Lisp load path and add following into
+;; emacs startup file.
+;;
+;;     (require 'emacs-djira)
+;;
+;; or use autoload:
+;;
+;;      (autoload 'emacs-djira-mode "emacs-djira" "" t)
+
+;;; Commentary:
+;;
+
+
+;;; History:
+;;
+
+;;; Code:
+
+(require 'json)
+(require 'url)
+(require 'url-http)
+
+(require 's)
+
+
+(defgroup djira nil
+  "Insert documentation here.")
+
+(defcustom djira-url "http://localhost:8000/__djira__/"
+  "djira API root URL."
+  :group 'emacs-djira
+  :type  'string
+  :safe  'stringp)
+
+
+(defun djira--make-url (endpoint query-string)
+  (concat
+   (s-chop-suffix "/" djira-url) "/"
+   (s-chop-suffix "/" endpoint) "/"
+   (unless (string= query-string "")
+     (concat "?" query-string))))
+
+
+(defun djira--make-query-string (&rest kwargs)
+  "Make a query string form a list of `:keyword value'.
+
+It handles appropriately booleans and lists. Other types are
+converted to strings using the `format' function.
+
+The returned value is `url-hexified' so that it can be used
+safely in an URL."
+  (let ((res ()))
+    ;; convert (:foo "bar" :baz 3) -> (("baz" 3) ("foo" "bar"))
+    ;; handles booleans (:foo t) -> (("foo" "true"))
+    ;; and lists (:foo (1 2)) -> (("foo" 2) ("foo" 1))
+    (while kwargs
+      (let ((kw (s-chop-prefix ":" (symbol-name (car kwargs))))
+            (val (cadr kwargs)))
+        (cond
+         ((listp val)
+          (mapc (lambda (x) (push (list kw x) res)) val))
+         ((booleanp val)
+          (push (list kw (if val "true" "false")) res))
+         (t
+          (push (list kw val) res))))
+      (setq kwargs (cdr (cdr kwargs))))
+    ;; convert (("baz" 3) ("foo" "bar")) -> "foo=bar&baz=3"
+    (mapconcat
+     (lambda (x) (format "%s=%s"
+                    (car x)
+                    (url-hexify-string (format "%s" (cadr x)))))
+     (reverse res)
+     "&")))
+
+
+(defun djira--get-status-code (&optional buffer)
+  (with-current-buffer (or buffer (current-buffer))
+    (save-excursion
+      (goto-char (point-min))
+      (save-match-data
+        (if (looking-at "HTTP/[[:digit:]]+\.[[:digit:]]+ \\([[:digit:]]\\{3\\}\\) .*$")
+            (match-string 1)
+          (error "Unsupported HTTP response format"))))))
+
+
+
+(defun djira--get-content-type (&optional buffer)
+  (with-current-buffer (or buffer (current-buffer))
+    (save-excursion
+      (goto-char (point-min))
+      (save-match-data
+        (if (search-forward-regexp "^Content-Type: \\([^ ]+\\)$" nil t)
+            (match-string 1)
+          (error "Unsupported HTTP Content-Type format"))))))
+
+
+(defun djira--get-payload (&optional buffer)
+  (with-current-buffer (or buffer (current-buffer))
+    (save-excursion
+      (goto-char (point-min))
+      (save-match-data
+        (if (search-forward-regexp "^$" nil t)
+            (buffer-substring-no-properties (1+ (point)) (point-max))
+          "")))))
+
+
+(defun djira--parse-json (v)
+  (json-read-from-string v))
+
+
+(defun djira--do-magic ()
+  (let ((status-code (djira--get-status-code))
+        (content-type (djira--get-content-type))
+        (payload (djira--get-payload)))
+    (cond
+     ((string= status-code "200")
+      (if (not (string= content-type "application/json"))
+          (error "Unexpected content-type: %s" content-type)
+        (djira--parse-json payload)))
+     ((string= status-code "400")
+      ;; TODO: the payload carries details, in json, about the
+      ;; error
+      (error "Bad request"))
+     ((string= status-code "404")
+      (error "Endpoint not found"))
+     ((string= status-code "500")
+      ;; TODO: the payload carries details, in json, about the
+      ;; error
+      (error "Error calling endpoint"))
+     (t
+      (error "Unsupported status-code: %s" status-code)))))
+
+
+;;;###autoload
+(defun djira-call (endpoint &rest kwargs)
+  "Call the endpoint and the retuns the result."
+  (let ((url (djira--make-url endpoint (djira--make-query-string kwargs))))
+    (with-current-buffer (url-retrieve-synchronously url)
+      (djira--do-magic))))
+
+
+(provide 'emacs-djira)
+
+;;; emacs-djira.el ends here
