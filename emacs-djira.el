@@ -1,4 +1,3 @@
-;;; -*- lexical-binding: t -*-
 ;;; emacs-djira.el --- djira client for emacs
 
 ;; $Id:$
