@@ -174,39 +174,22 @@ line
            (djira--get-content-type (lambda () "application/json"))
            (djira--get-payload (lambda () "42")))
 
-          (should (equal (djira--do-magic) 42)))
+          (should (equal (djira--do-magic) 42))
 
-  (fpatch ((djira--get-status-code (lambda () "200"))
-           (djira--get-content-type (lambda () "text/html"))
-           (djira--get-payload (lambda () "42")))
+          (fpatch ((djira--get-content-type (lambda () "text/html")))
+                  (should-error-with (djira--do-magic) 'error '("Unexpected content-type: text/html")))
 
-          (should-error-with (djira--do-magic) 'error '("Unexpected content-type: text/html")))
+          (fpatch ((djira--get-status-code (lambda () "400")))
+                  (should-error-with (djira--do-magic) 'error '("Bad request")))
 
-  (fpatch ((djira--get-status-code (lambda () "400"))
-           (djira--get-content-type (lambda () "application/json"))
-           (djira--get-payload (lambda () "42")))
+          (fpatch ((djira--get-status-code (lambda () "404")))
+                  (should-error-with (djira--do-magic) 'error '("Endpoint not found")))
 
-          (should-error-with (djira--do-magic) 'error '("Bad request")))
+          (fpatch ((djira--get-status-code (lambda () "500")))
+                  (should-error-with (djira--do-magic) 'error '("Error calling endpoint")))
 
-  (fpatch ((djira--get-status-code (lambda () "404"))
-           (djira--get-content-type (lambda () "application/json"))
-           (djira--get-payload (lambda () "42")))
-
-          (should-error-with (djira--do-magic) 'error '("Endpoint not found")))
-
-  (fpatch ((djira--get-status-code (lambda () "500"))
-           (djira--get-content-type (lambda () "application/json"))
-           (djira--get-payload (lambda () "42")))
-
-          (should-error-with (djira--do-magic) 'error '("Error calling endpoint")))
-
-  (fpatch ((djira--get-status-code (lambda () "123"))
-           (djira--get-content-type (lambda () "application/json"))
-           (djira--get-payload (lambda () "42")))
-
-          (should-error-with (djira--do-magic) 'error '("Unsupported status-code: 123")))
-  )
-
+          (fpatch ((djira--get-status-code (lambda () "123")))
+                  (should-error-with (djira--do-magic) 'error '("Unsupported status-code: 123")))))
 
 
 ;;;  tests-emacs-djira.el ends here
