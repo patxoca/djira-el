@@ -79,7 +79,7 @@
 (ert-deftest test-djira--make-query-string ()
   "Tests query string generation."
   (cl-flet ((example (input expected)
-                     (should (equal (apply 'djira--make-query-string input) expected))))
+                     (should (equal (djira--make-query-string input) expected))))
     (example '()            "")
     (example '(:foo "bar")  "foo=bar")
     (example '(:foo 3)      "foo=3")

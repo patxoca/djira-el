@@ -71,7 +71,7 @@
      (concat "?" query-string))))
 
 
-(defun djira--make-query-string (&rest kwargs)
+(defun djira--make-query-string (kwargs)
   "Make a query string form a list of `:keyword value'.
 
 It handles appropriately booleans and lists. Other types are
