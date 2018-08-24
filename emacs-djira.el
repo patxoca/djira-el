@@ -63,6 +63,17 @@
   :safe  'stringp)
 
 
+;;;      _  _ _                  _ _            _
+;;;   __| |(_|_)_ __ __ _    ___| (_) ___ _ __ | |_
+;;;  / _` || | | '__/ _` |  / __| | |/ _ \ '_ \| __|
+;;; | (_| || | | | | (_| | | (__| | |  __/ | | | |_
+;;;  \__,_|/ |_|_|  \__,_|  \___|_|_|\___|_| |_|\__|
+;;;      |__/
+
+;; The code in this section handles communication with the djira
+;; service. The main entry point is `djira-call'.
+
+
 (defun djira--make-url (endpoint query-string)
   (concat
    (s-chop-suffix "/" djira-url) "/"
@@ -168,6 +179,28 @@ safely in an URL."
   (let ((url (djira--make-url endpoint (djira--make-query-string kwargs))))
     (with-current-buffer (url-retrieve-synchronously url)
       (djira--process-response-buffer))))
+
+
+;;;      _  _ _                _    ____ ___
+;;;   __| |(_|_)_ __ __ _     / \  |  _ \_ _|
+;;;  / _` || | | '__/ _` |   / _ \ | |_) | |
+;;; | (_| || | | | | (_| |  / ___ \|  __/| |
+;;;  \__,_|/ |_|_|  \__,_| /_/   \_\_|  |___|
+;;;      |__/
+
+;;; This section defines functions that hide the details of djira.
+
+(defun djira-api-ping ()
+  (string= (djira-call "__ping__") "pong"))
+
+(defun djira-api-get-apps-list ()
+  (djira-call "get_apps_list"))
+
+(defun djira-api-get-apps-details (&rest labels)
+  (djira-call "get_apps_details" :labels labels))
+
+(defun djira-api-get-system-info ()
+  (djira-call "get_system_info"))
 
 
 (provide 'emacs-djira)
