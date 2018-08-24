@@ -103,35 +103,36 @@ safely in an URL."
      "&")))
 
 
-(defun djira--get-status-code (&optional buffer)
-  (with-current-buffer (or buffer (current-buffer))
+(defmacro djira--with-response-buffer (buffer &rest body)
+  `(with-current-buffer (or ,buffer (current-buffer))
     (save-excursion
       (goto-char (point-min))
       (save-match-data
-        (if (looking-at "HTTP/[[:digit:]]+\.[[:digit:]]+ \\([[:digit:]]\\{3\\}\\) .*$")
-            (match-string 1)
-          (error "Unsupported HTTP response format"))))))
+        ,@body))))
 
+
+(defun djira--get-status-code (&optional buffer)
+  (djira--with-response-buffer
+   buffer
+   (if (looking-at "HTTP/[[:digit:]]+\.[[:digit:]]+ \\([[:digit:]]\\{3\\}\\) .*$")
+       (match-string 1)
+     (error "Unsupported HTTP response format"))))
 
 
 (defun djira--get-content-type (&optional buffer)
-  (with-current-buffer (or buffer (current-buffer))
-    (save-excursion
-      (goto-char (point-min))
-      (save-match-data
-        (if (search-forward-regexp "^Content-Type: \\([^ ]+\\)$" nil t)
-            (match-string 1)
-          (error "Unsupported HTTP Content-Type format"))))))
+  (djira--with-response-buffer
+   buffer
+   (if (search-forward-regexp "^Content-Type: \\([^ ]+\\)$" nil t)
+       (match-string 1)
+     (error "Unsupported HTTP Content-Type format"))))
 
 
 (defun djira--get-payload (&optional buffer)
-  (with-current-buffer (or buffer (current-buffer))
-    (save-excursion
-      (goto-char (point-min))
-      (save-match-data
-        (if (search-forward-regexp "^$" nil t)
-            (buffer-substring-no-properties (1+ (point)) (point-max))
-          "")))))
+  (djira--with-response-buffer
+   buffer
+   (if (search-forward-regexp "^$" nil t)
+       (buffer-substring-no-properties (1+ (point)) (point-max))
+     "")))
 
 
 (defun djira--parse-json (v)
