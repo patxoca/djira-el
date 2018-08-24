@@ -139,7 +139,7 @@ safely in an URL."
   (json-read-from-string v))
 
 
-(defun djira--do-magic ()
+(defun djira--process-response-buffer ()
   (let ((status-code (djira--get-status-code))
         (content-type (djira--get-content-type))
         (payload (djira--get-payload)))
@@ -167,7 +167,7 @@ safely in an URL."
   "Call the endpoint and the retuns the result."
   (let ((url (djira--make-url endpoint (djira--make-query-string kwargs))))
     (with-current-buffer (url-retrieve-synchronously url)
-      (djira--do-magic))))
+      (djira--process-response-buffer))))
 
 
 (provide 'emacs-djira)
