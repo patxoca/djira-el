@@ -173,7 +173,6 @@ safely in an URL."
       (error "Unsupported status-code: %s" status-code)))))
 
 
-;;;###autoload
 (defun djira-call (endpoint &rest kwargs)
   "Call the endpoint and the retuns the result."
   (let ((url (djira--make-url endpoint (djira--make-query-string kwargs))))
