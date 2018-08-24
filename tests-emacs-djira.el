@@ -60,6 +60,13 @@
          ,name-res))))
 
 
+;;;      _  _ _                  _ _            _
+;;;   __| |(_|_)_ __ __ _    ___| (_) ___ _ __ | |_
+;;;  / _` || | | '__/ _` |  / __| | |/ _ \ '_ \| __|
+;;; | (_| || | | | | (_| | | (__| | |  __/ | | | |_
+;;;  \__,_|/ |_|_|  \__,_|  \___|_|_|\___|_| |_|\__|
+;;;      |__/
+
 (ert-deftest test-djira--make-url ()
   ""
   (cl-flet ((example (input expected)
@@ -192,6 +199,67 @@ line
 
           (fpatch ((djira--get-status-code (lambda () "123")))
                   (should-error-with (djira--process-response-buffer) 'error '("Unsupported status-code: 123")))))
+
+
+;;;                                 _                    _
+;;;  _ __ ___  __ _ _   _  ___  ___| |_    ___ __ _  ___| |__   ___
+;;; | '__/ _ \/ _` | | | |/ _ \/ __| __|  / __/ _` |/ __| '_ \ / _ \
+;;; | | |  __/ (_| | |_| |  __/\__ \ |_  | (_| (_| | (__| | | |  __/
+;;; |_|  \___|\__, |\__,_|\___||___/\__|  \___\__,_|\___|_| |_|\___|
+;;;              |_|
+
+(defmacro with-djira--request-cache (&rest body)
+  `(let ((djira--request-cache (make-hash-table :test 'equal)))
+     ,@body))
+
+(ert-deftest test-with-djira--request-cache-creates-empty-hash-table ()
+  "Just to make me more confident as I keep learning."
+  (with-djira--request-cache
+   (should (equal (type-of djira--request-cache) 'hash-table))
+   (should (= (hash-table-count djira--request-cache) 0))))
+
+(ert-deftest test-with-djira--request-cache-discards-changes ()
+  "Just to make me more confident as I keep learning."
+  (with-djira--request-cache
+   (puthash "key" "value" djira--request-cache)
+   (should (= (hash-table-count djira--request-cache) 1)))
+  (should (= (hash-table-count djira--request-cache) 0)))
+
+
+(ert-deftest test-djira--cache-invalidate ()
+  "asdf"
+  (with-djira--request-cache
+   (puthash "key" "value" djira--request-cache)
+   (should (= (hash-table-count djira--request-cache) 1)) ; just to be safe
+   (djira--cache-invalidate)
+   (should (= (hash-table-count djira--request-cache) 0))))
+
+
+(ert-deftest test-djira--cache-put ()
+  "asdf"
+  (with-djira--request-cache
+   (djira--cache-put "key" "first")
+   (should (= (hash-table-count djira--request-cache) 1))
+   (should (equal (gethash "key" djira--request-cache) "first"))
+   (djira--cache-put "key" "second")
+   (should (= (hash-table-count djira--request-cache) 1))
+   (should (equal (gethash "key" djira--request-cache) "second"))))
+
+
+(ert-deftest test-djira--cache-get ()
+  "asdf"
+  (with-djira--request-cache
+   (should (null (djira--cache-get "key")))
+   (djira--cache-put "key" "first")
+   (should (equal (djira--cache-get "key") "first"))))
+
+
+(ert-deftest test-djira--cache-contains ()
+  "asdf"
+  (with-djira--request-cache
+   (should (null (djira--cache-contains "key")))
+   (djira--cache-put "key" "first")
+   (should (djira--cache-contains "key"))))
 
 
 ;;;  tests-emacs-djira.el ends here

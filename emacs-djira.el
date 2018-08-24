@@ -63,6 +63,30 @@
   :safe  'stringp)
 
 
+;;;                                 _                    _
+;;;  _ __ ___  __ _ _   _  ___  ___| |_    ___ __ _  ___| |__   ___
+;;; | '__/ _ \/ _` | | | |/ _ \/ __| __|  / __/ _` |/ __| '_ \ / _ \
+;;; | | |  __/ (_| | |_| |  __/\__ \ |_  | (_| (_| | (__| | | |  __/
+;;; |_|  \___|\__, |\__,_|\___||___/\__|  \___\__,_|\___|_| |_|\___|
+;;;              |_|
+
+(defvar djira--request-cache (make-hash-table :test 'equal)
+  "Cache table storing requests.")
+
+(defun djira--cache-invalidate ()
+  (clrhash djira--request-cache))
+
+(defun djira--cache-put (url value)
+  (puthash url value djira--request-cache))
+
+(defun djira--cache-get (url)
+  (gethash url djira--request-cache nil))
+
+(defun djira--cache-contains (url)
+  (let ((marker '("marker")))
+    (not (eq (gethash url djira--request-cache marker) marker))))
+
+
 ;;;      _  _ _                  _ _            _
 ;;;   __| |(_|_)_ __ __ _    ___| (_) ___ _ __ | |_
 ;;;  / _` || | | '__/ _` |  / __| | |/ _ \ '_ \| __|
@@ -173,11 +197,38 @@ safely in an URL."
       (error "Unsupported status-code: %s" status-code)))))
 
 
-(defun djira-call (endpoint &rest kwargs)
-  "Call the endpoint and the retuns the result."
+(defun djira--call (url)
+  (with-current-buffer (url-retrieve-synchronously url)
+    (djira--process-response-buffer)))
+
+
+(defun djira-call (endpoint skip-cache &rest kwargs)
+  "Call the endpoint and retuns the result.
+
+If SKIP-CACHE is non nil the call goes directly to djira and the
+result is not cached, otherwise the result is retrieved through
+the cache.
+
+The key used for indexing the cache ís the URL. The problem is
+that two different URLs may be equivalent:
+
+  http://foo/?bar=1&baz=2
+  http://foo/?baz=2&bar=1
+
+The simplest solution is creating a thin wrapper around
+`djira-call' for each endpoint in order to provide a simpler
+interface for client code and standardize the format of the
+resulting URL.
+
+Sorting KWARGS alphabetically seems a good idea but currently I
+prefer not to inforce that in `djira--make-query-string' (list
+arguments :foo 1 :foo 2)."
   (let ((url (djira--make-url endpoint (djira--make-query-string kwargs))))
-    (with-current-buffer (url-retrieve-synchronously url)
-      (djira--process-response-buffer))))
+    (if skip-cache
+        (djira--call url)
+      (unless (djira--cache-contains url)
+        (djira--cache-put url (djira--call url)))
+      (djira--cache-get url))))
 
 
 ;;;      _  _ _                _    ____ ___
@@ -190,16 +241,16 @@ safely in an URL."
 ;;; This section defines functions that hide the details of djira.
 
 (defun djira-api-ping ()
-  (string= (djira-call "__ping__") "pong"))
+  (string= (djira-call "__ping__" t) "pong"))
 
 (defun djira-api-get-apps-list ()
-  (djira-call "get_apps_list"))
+  (djira-call "get_apps_list" nil))
 
 (defun djira-api-get-apps-details (&rest labels)
-  (djira-call "get_apps_details" :labels labels))
+  (djira-call "get_apps_details" nil :labels labels))
 
 (defun djira-api-get-system-info ()
-  (djira-call "get_system_info"))
+  (djira-call "get_system_info" nil))
 
 
 (provide 'emacs-djira)
