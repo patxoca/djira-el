@@ -60,6 +60,18 @@
          ,name-res))))
 
 
+;;;  _          _
+;;; | |__   ___| |_ __   ___ _ __ ___
+;;; | '_ \ / _ \ | '_ \ / _ \ '__/ __|
+;;; | | | |  __/ | |_) |  __/ |  \__ \
+;;; |_| |_|\___|_| .__/ \___|_|  |___/
+;;;              |_|
+
+(ert-deftest test-djira--array-to-list ()
+  "Just being paranoid."
+  (should (listp (djira--array-to-list []))))
+
+
 ;;;      _  _ _                  _ _            _
 ;;;   __| |(_|_)_ __ __ _    ___| (_) ___ _ __ | |_
 ;;;  / _` || | | '__/ _` |  / __| | |/ _ \ '_ \| __|
@@ -262,4 +274,24 @@ line
    (should (djira--cache-contains "key"))))
 
 
+;;;      _  _ _                _    ____ ___
+;;;   __| |(_|_)_ __ __ _     / \  |  _ \_ _|
+;;;  / _` || | | '__/ _` |   / _ \ | |_) | |
+;;; | (_| || | | | | (_| |  / ___ \|  __/| |
+;;;  \__,_|/ |_|_|  \__,_| /_/   \_\_|  |___|
+;;;      |__/
+
+(ert-deftest test-djira-api-get-apps-details ()
+  "Ensure that `djira-api-get-apps-details' collects info for
+each app separately in order to improve cache hits."
+  (let ((call-args))
+    (fpatch
+     ((djira-call (lambda (&rest args) (push args call-args) '("result"))))
+     (djira-api-get-apps-details '("foo" "bar"))
+     (should (equal (reverse call-args)
+                    '(("get_apps_details" nil :labels "foo")
+                      ("get_apps_details" nil :labels "bar")))))))
+
+
+;;;      _  _ _             _        __
 ;;;  tests-emacs-djira.el ends here

@@ -63,6 +63,17 @@
   :safe  'stringp)
 
 
+;;;  _          _
+;;; | |__   ___| |_ __   ___ _ __ ___
+;;; | '_ \ / _ \ | '_ \ / _ \ '__/ __|
+;;; | | | |  __/ | |_) |  __/ |  \__ \
+;;; |_| |_|\___|_| .__/ \___|_|  |___/
+;;;              |_|
+
+(defsubst djira--array-to-list (s)
+  (mapcar (lambda (x) x) s))
+
+
 ;;;                                 _                    _
 ;;;  _ __ ___  __ _ _   _  ___  ___| |_    ___ __ _  ___| |__   ___
 ;;; | '__/ _ \/ _` | | | |/ _ \/ __| __|  / __/ _` |/ __| '_ \ / _ \
@@ -239,15 +250,26 @@ arguments :foo 1 :foo 2)."
 ;;;      |__/
 
 ;;; This section defines functions that hide the details of djira.
+;;; Each function maps to exactly one endpoint.
 
 (defun djira-api-ping ()
   (string= (djira-call "__ping__" t) "pong"))
 
 (defun djira-api-get-apps-list ()
-  (djira-call "get_apps_list" nil))
+  (djira--array-to-list (djira-call "get_apps_list" nil)))
 
-(defun djira-api-get-apps-details (&rest labels)
-  (djira-call "get_apps_details" nil :labels labels))
+(defun djira-api-get-apps-details (&optional labels)
+  "Call 'get_apps_details' endpoint.
+
+If provided LABELS must be a sequence of strings corresponding to
+the labels of the apps we are interested in getting information
+from. If omitted it will return information about all apps."
+  ;; In order to play nicely with the cache we process each label
+  ;; separately instead of leveragin that "get_apps_details" accepts a
+  ;; list as argument.
+  (mapcar
+   (lambda (x) (car (djira-call "get_apps_details" nil :labels x)))
+   (or labels (djira-api-get-apps-list))))
 
 (defun djira-api-get-system-info ()
   (djira-call "get_system_info" nil))
