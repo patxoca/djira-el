@@ -275,6 +275,55 @@ from. If omitted it will return information about all apps."
   (djira-call "get_system_info" nil))
 
 
+;;;      _  _ _             _        __
+;;;   __| |(_|_)_ __ __ _  (_)_ __  / _| ___
+;;;  / _` || | | '__/ _` | | | '_ \| |_ / _ \
+;;; | (_| || | | | | (_| | | | | | |  _| (_) |
+;;;  \__,_|/ |_|_|  \__,_| |_|_| |_|_|  \___/
+;;;      |__/
+
+;;; Convenience functions built on top of djira-api-xxx. These
+;;; functions simplify getting specific information out of djira data
+;;; structures.
+
+(defun djira-info-get-project-root ()
+  "Return the root of the django project, that's to say, the path
+of the directory containing the 'manage.py' command."
+  (cdr (assoc 'django_project_root (djira-api-get-system-info))))
+
+(defun djira-info-get-all-apps-labels ()
+  "Return a list containing the labels of all installed apps."
+  (djira-api-get-apps-list))
+
+(defun djira-info-get-app-path (label)
+  "Return the root of a django app, that's to say, the path of
+the directory containing 'models.py' etc."
+  (cdr (assoc 'path (cdar (djira-api-get-apps-details (list label))))))
+
+(defun djira-info-get-all-apps-paths ()
+  "Return the root fo all django apps. The returned value is an
+alist mapping app labels to app roots."
+  (mapcar (lambda (x) (cons x (djira-info-get-app-path x)))
+          (djira-info-get-all-apps-labels)))
+
+(defun djira-info-get-app-models (label)
+  "Return the names of the models defined in the app LABEL.
+Names are qualified with the label of the app.
+
+Django defines both 'the name' and 'the object name' of a model.
+This function returns the object model, that's to say, the name
+of the class."
+  (mapcar
+   (lambda (x) (concat label "." x))
+   (cdr (assoc 'models (cdar (djira-api-get-apps-details (list label)))))))
+
+(defun djira-info-get-all-apps-models ()
+  "Returns the names of the models defined in all the apps.
+Names are qualified with the label of the app."
+  (reduce 'append (mapcar 'djira-info-get-app-models
+                          (djira-info-get-all-apps-labels))))
+
+
 (provide 'emacs-djira)
 
 ;;; emacs-djira.el ends here

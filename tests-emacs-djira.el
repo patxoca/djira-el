@@ -294,4 +294,95 @@ each app separately in order to improve cache hits."
 
 
 ;;;      _  _ _             _        __
+;;;   __| |(_|_)_ __ __ _  (_)_ __  / _| ___
+;;;  / _` || | | '__/ _` | | | '_ \| |_ / _ \
+;;; | (_| || | | | | (_| | | | | | |  _| (_) |
+;;;  \__,_|/ |_|_|  \__,_| |_|_| |_|_|  \___/
+;;;      |__/
+
+
+(ert-deftest test-djira-info-get-project-root ()
+  ""
+  (let ((response '((django . "/some/path/lib/python3.6/site-packages/django")
+                    (django_project_root . "/home/aroda/prog/djira/project")
+                    (django_settings
+                     (ABSOLUTE_URL_OVERRIDES)
+                     (ADMINS . [])
+                     (ALLOWED_HOSTS . [])
+                     (APPEND_SLASH . t))
+                    (django_settings_module . "project.settings")
+                    (django_version . [1 11 15 "final" 0])
+                    (python . "/some/path/bin/python")
+                    (python_version . [3 6 4 "final" 0]))
+                  ))
+    (fpatch
+     ((djira-api-get-system-info (lambda () response)))
+     (should (equal (djira-info-get-project-root)
+                    "/home/aroda/prog/djira/project")))))
+
+
+(ert-deftest test-djira-info-get-app-path ()
+  ""
+  (let ((response '((admin
+                     (label . "admin")
+                     (models .
+                             ["logentry"])
+                     (name . "django.contrib.admin")
+                     (path . "/some/path/django/contrib/admin")
+                     (verbose_name . "Administration")))))
+    (fpatch
+     ((djira-api-get-apps-details (lambda (label) response)))
+     (should (equal (djira-info-get-app-path "admin")
+                    "/some/path/django/contrib/admin"))))
+
+  (let ((response '((admin)))) ; read as '((admin . ())), no info available
+    (fpatch
+     ((djira-api-get-apps-details (lambda (label) response)))
+     (should (null (djira-info-get-app-path "admin"))))))
+
+
+(ert-deftest test-djira-info-get-all-apps-paths ()
+  ""
+  (let ((data '(("admin" . "/some/path/django/contrib/admin")
+                ("foo" . "/some/path/django/contrib/foo")
+                ("auth" . "/some/path/django/contrib/auth"))))
+    (fpatch
+     ((djira-info-get-all-apps-labels (lambda () '("admin" "auth")))
+      (djira-info-get-app-path (lambda (label) (cdr (assoc label data)))))
+     (should (equal (djira-info-get-all-apps-paths)
+                    '(("admin" . "/some/path/django/contrib/admin")
+                      ("auth" . "/some/path/django/contrib/auth")))))))
+
+
+(ert-deftest test-djira-info-get-app-models ()
+  ""
+  (let ((response '((auth
+                     (label . "auth")
+                     (models . ["Group" "Permission" "User"])
+                     (name . "django.contrib.auth")
+                     (path . "/some/path/django/contrib/auth")
+                     (verbose_name . "Authentication and Authorization")))))
+    (fpatch
+     ((djira-api-get-apps-details (lambda (x) response)))
+     (should (equal (djira-info-get-app-models "auth")
+                    '("auth.Group" "auth.Permission" "auth.User")))))
+
+  (let ((response '((auth))))
+    (fpatch
+     ((djira-api-get-apps-details (lambda (x) response)))
+     (should (null (djira-info-get-app-models "auth"))))))
+
+
+(ert-deftest test-djira-info-get-all-apps-models ()
+  ""
+  (let ((data '(("foo" "foo.Model1" "foo.Model2" )
+                ("bar" "bar.Model3")
+                ("baz"))))
+    (fpatch
+     ((djira-info-get-all-apps-labels (lambda () (mapcar 'car data)))
+      (djira-info-get-app-models (lambda (x) (cdr (assoc x data)))))
+     (should (equal (djira-info-get-all-apps-models)
+                    '("foo.Model1" "foo.Model2" "bar.Model3"))))))
+
+
 ;;;  tests-emacs-djira.el ends here
