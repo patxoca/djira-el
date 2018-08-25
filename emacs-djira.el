@@ -50,6 +50,7 @@
 (require 'url)
 (require 'url-http)
 
+(require 'dash)
 (require 's)
 
 
@@ -322,6 +323,28 @@ of the class."
 Names are qualified with the label of the app."
   (reduce 'append (mapcar 'djira-info-get-app-models
                           (djira-info-get-all-apps-labels))))
+
+
+;;;  _          _                                           _
+;;; | |_ ___   | |__   ___   _ __   __ _ _ __ ___   ___  __| |
+;;; | __/ _ \  | '_ \ / _ \ | '_ \ / _` | '_ ` _ \ / _ \/ _` |
+;;; | || (_) | | |_) |  __/ | | | | (_| | | | | | |  __/ (_| |
+;;;  \__\___/  |_.__/ \___| |_| |_|\__,_|_| |_| |_|\___|\__,_|
+
+;;; This section defines helper functions and end user commands
+
+(defun djira-buffer-belongs-in-app-p (buffer)
+  "Check whether BUFFER visits a buffer that belongs to any app
+in the running django instance. Returns the app label or nil.
+
+Note that 'setup.py' etc. are considered to be outside the app."
+  (let ((filename (buffer-file-name buffer)))
+    (when filename
+      (car (-first
+            (lambda (x) (s-starts-with-p (cdr x) filename))
+            (djira-info-get-all-apps-paths))))))
+
+(defalias 'djira-get-app-for-buffer 'djira-buffer-belongs-in-app-p)
 
 
 (provide 'emacs-djira)

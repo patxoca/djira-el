@@ -385,4 +385,30 @@ each app separately in order to improve cache hits."
                     '("foo.Model1" "foo.Model2" "bar.Model3"))))))
 
 
+;;;  _          _                                           _
+;;; | |_ ___   | |__   ___   _ __   __ _ _ __ ___   ___  __| |
+;;; | __/ _ \  | '_ \ / _ \ | '_ \ / _` | '_ ` _ \ / _ \/ _` |
+;;; | || (_) | | |_) |  __/ | | | | (_| | | | | | |  __/ (_| |
+;;;  \__\___/  |_.__/ \___| |_| |_|\__,_|_| |_| |_|\___|\__,_|
+
+
+(ert-deftest test-djira-buffer-belongs-in-app-p ()
+  ""
+  (fpatch
+   ((buffer-file-name (lambda (x) nil)))     ; non file buffer
+   (should (null (djira-buffer-belongs-in-app-p "whatever"))))
+
+  (let ((data '(("foo" . "/some/path/foo")
+                ("bar" . "/other/path/bar"))))
+    (fpatch
+     ((buffer-file-name (lambda (x) "/some/path/foo/baz.txt"))
+      (djira-info-get-all-apps-paths (lambda () data)))
+     (should (equal (djira-buffer-belongs-in-app-p "whatever") "foo")))
+
+    (fpatch
+     ((buffer-file-name (lambda (x) "/third/path/baz.txt"))
+      (djira-info-get-all-apps-paths (lambda () data)))
+     (should (null (djira-buffer-belongs-in-app-p "whatever"))))))
+
+
 ;;;  tests-emacs-djira.el ends here
