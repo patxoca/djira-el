@@ -1,16 +1,16 @@
-;;; djira.el --- djira client for emacs
+;;; djira.el --- djira client
 
 ;; $Id:$
 
 ;; Emacs List Archive Entry
 ;; Filename: djira.el
-;; Version: $Revision:$
-;; Keywords:
+;; Version: 0.1.0
+;; Keywords: convenience
 ;; Author: Alexis Roda <alexis.roda.villalonga@gmail.com>
 ;; Maintainer: Alexis Roda <alexis.roda.villalonga@gmail.com>
 ;; Created: 2018-08-23
 ;; Description:
-;; URL:
+;; URL: https://github.com/patxoca/djira-el
 ;; Compatibility: Emacs24
 
 ;; COPYRIGHT NOTICE
@@ -33,13 +33,15 @@
 ;;
 ;;     (require 'djira)
 ;;
-;; or use autoload:
-;;
-;;      (autoload 'djira-mode "djira" "" t)
 
 ;;; Commentary:
-;;
 
+;; Emacs client for djira. djira provides introspection for a running
+;; django instance.
+;;
+;; Currently djira-el is just a library, see the package arv-py-django
+;; (https://github.com/patxoca/arv-py-django) for an actual package
+;; leveraging djira.
 
 ;;; History:
 ;;
@@ -54,14 +56,8 @@
 (require 's)
 
 
-(defgroup djira nil
-  "Insert documentation here.")
-
-(defcustom djira-url "http://localhost:8000/__djira__/"
-  "djira API root URL."
-  :group 'djira
-  :type  'string
-  :safe  'stringp)
+(defvar djira-url "http://localhost:8000/__djira__/"
+  "djira's API root URL.")
 
 
 ;;;  _          _
