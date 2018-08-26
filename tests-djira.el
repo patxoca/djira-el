@@ -4,7 +4,7 @@
 (require 'cl)
 (require 'ert)
 
-(require 'emacs-djira)
+(require 'djira)
 
 
 (defmacro with-buffer-fixture (content &rest body)

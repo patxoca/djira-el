@@ -1,9 +1,9 @@
-;;; emacs-djira.el --- djira client for emacs
+;;; djira.el --- djira client for emacs
 
 ;; $Id:$
 
 ;; Emacs List Archive Entry
-;; Filename: emacs-djira.el
+;; Filename: djira.el
 ;; Version: $Revision:$
 ;; Keywords:
 ;; Author: Alexis Roda <alexis.roda.villalonga@gmail.com>
@@ -31,11 +31,11 @@
 ;; Put this file on your Emacs-Lisp load path and add following into
 ;; emacs startup file.
 ;;
-;;     (require 'emacs-djira)
+;;     (require 'djira)
 ;;
 ;; or use autoload:
 ;;
-;;      (autoload 'emacs-djira-mode "emacs-djira" "" t)
+;;      (autoload 'djira-mode "djira" "" t)
 
 ;;; Commentary:
 ;;
@@ -59,7 +59,7 @@
 
 (defcustom djira-url "http://localhost:8000/__djira__/"
   "djira API root URL."
-  :group 'emacs-djira
+  :group 'djira
   :type  'string
   :safe  'stringp)
 
@@ -347,6 +347,6 @@ Note that 'setup.py' etc. are considered to be outside the app."
 (defalias 'djira-get-app-for-buffer 'djira-buffer-belongs-in-app-p)
 
 
-(provide 'emacs-djira)
+(provide 'djira)
 
-;;; emacs-djira.el ends here
+;;; djira.el ends here
