@@ -1,5 +1,4 @@
 ;;; -*- lexical-binding: t -*-
-;;; tests-emacs-djira.el --- tests for emacs-djira
 
 (require 'cl)
 (require 'ert)
@@ -411,4 +410,4 @@ each app separately in order to improve cache hits."
      (should (null (djira-buffer-belongs-in-app-p "whatever"))))))
 
 
-;;;  tests-emacs-djira.el ends here
+;;;  djira-tests.el ends here

@@ -1,4 +1,4 @@
-;;; djira.el --- djira client
+;;; djira.el --- djira client  -*- lexical-binding: t; -*-
 
 ;; $Id:$
 
@@ -12,6 +12,7 @@
 ;; Description:
 ;; URL: https://github.com/patxoca/djira-el
 ;; Compatibility: Emacs24
+;; Package-Requires: ((dash "2.12.0") (emacs "24") (s "1.12.0"))
 
 ;; COPYRIGHT NOTICE
 ;;
@@ -68,6 +69,7 @@
 ;;;              |_|
 
 (defsubst djira--array-to-list (s)
+  "Convert the array S to a list."
   (mapcar (lambda (x) x) s))
 
 
@@ -82,15 +84,19 @@
   "Cache table storing requests.")
 
 (defun djira--cache-invalidate ()
+  "Invalidate the contents of the cache."
   (clrhash djira--request-cache))
 
 (defun djira--cache-put (url value)
+  "Associate VALUE to URL in the cache."
   (puthash url value djira--request-cache))
 
 (defun djira--cache-get (url)
+  "Retrieve the value associated to URL from the cache."
   (gethash url djira--request-cache nil))
 
 (defun djira--cache-contains (url)
+  "Check whether URL is in the cache."
   (let ((marker '("marker")))
     (not (eq (gethash url djira--request-cache marker) marker))))
 
@@ -107,6 +113,7 @@
 
 
 (defun djira--make-url (endpoint query-string)
+  "Make the url for ENDPOINT and QUERY-STRING."
   (concat
    (s-chop-suffix "/" djira-url) "/"
    (s-chop-suffix "/" endpoint) "/"
@@ -115,7 +122,7 @@
 
 
 (defun djira--make-query-string (kwargs)
-  "Make a query string form a list of `:keyword value'.
+  "Make a query string from KWARGS.
 
 It handles appropriately booleans and lists. Other types are
 converted to strings using the `format' function.
@@ -147,6 +154,10 @@ safely in an URL."
 
 
 (defmacro djira--with-response-buffer (buffer &rest body)
+  "Execute BODY in the context of the response buffer BUFFER.
+
+When processing the response, guarantees an initial state and
+preserves 'current-buffer', 'point', 'mark' and 'match-data'."
   `(with-current-buffer (or ,buffer (current-buffer))
     (save-excursion
       (goto-char (point-min))
@@ -155,6 +166,7 @@ safely in an URL."
 
 
 (defun djira--get-status-code (&optional buffer)
+  "Get HTTP response status from BUFFER."
   (djira--with-response-buffer
    buffer
    (if (looking-at "HTTP/[[:digit:]]+\.[[:digit:]]+ \\([[:digit:]]\\{3\\}\\) .*$")
@@ -163,6 +175,7 @@ safely in an URL."
 
 
 (defun djira--get-content-type (&optional buffer)
+  "Get HTTP Content-Type from BUFFER."
   (djira--with-response-buffer
    buffer
    (if (search-forward-regexp "^Content-Type: \\([^ ]+\\)$" nil t)
@@ -171,6 +184,7 @@ safely in an URL."
 
 
 (defun djira--get-payload (&optional buffer)
+  "Get HTTP payload from BUFFER."
   (djira--with-response-buffer
    buffer
    (if (search-forward-regexp "^$" nil t)
@@ -179,10 +193,15 @@ safely in an URL."
 
 
 (defun djira--parse-json (v)
+  "Convert V to Emacs lisp data."
   (json-read-from-string v))
 
 
 (defun djira--process-response-buffer ()
+  "Process the djira response from the current buffer.
+
+Return the payload converted to emacs lisp types.
+"
   (let ((status-code (djira--get-status-code))
         (content-type (djira--get-content-type))
         (payload (djira--get-payload)))
@@ -206,12 +225,13 @@ safely in an URL."
 
 
 (defun djira--call (url)
+  "Call the endpoint at URL and return the parsed result."
   (with-current-buffer (url-retrieve-synchronously url)
     (djira--process-response-buffer)))
 
 
 (defun djira-call (endpoint skip-cache &rest kwargs)
-  "Call the endpoint and retuns the result.
+  "Call the endpoint ENDPOINT and retuns the result.
 
 If SKIP-CACHE is non nil the call goes directly to djira and the
 result is not cached, otherwise the result is retrieved through
@@ -250,9 +270,11 @@ arguments :foo 1 :foo 2)."
 ;;; Each function maps to exactly one endpoint.
 
 (defun djira-api-ping ()
+  "Call '__ping__' endpoint."
   (string= (djira-call "__ping__" t) "pong"))
 
 (defun djira-api-get-apps-list ()
+  "Call 'get_apps_list' endpoint."
   (djira--array-to-list (djira-call "get_apps_list" nil)))
 
 (defun djira-api-get-apps-details (&optional labels)
@@ -269,6 +291,7 @@ from. If omitted it will return information about all apps."
    (or labels (djira-api-get-apps-list))))
 
 (defun djira-api-get-system-info ()
+  "Call 'get_system_info' endpoint."
   (djira-call "get_system_info" nil))
 
 
@@ -284,27 +307,33 @@ from. If omitted it will return information about all apps."
 ;;; structures.
 
 (defun djira-info-get-project-root ()
-  "Return the root of the django project, that's to say, the path
-of the directory containing the 'manage.py' command."
+  "Return the root of the django project.
+
+In this context 'project' refers to the directory containing the
+'manage.py' command."
   (cdr (assoc 'django_project_root (djira-api-get-system-info))))
 
 (defun djira-info-get-all-apps-labels ()
   "Return a list containing the labels of all installed apps."
   (djira-api-get-apps-list))
 
-(defun djira-info-get-app-path (label)
-  "Return the root of a django app, that's to say, the path of
-the directory containing 'models.py' etc."
+(defun djira-info-get-app-root (label)
+  "Return the root of a django app LABEL.
+
+In this context the root of an app is the directory containing
+'models.py' etc."
   (cdr (assoc 'path (cdar (djira-api-get-apps-details (list label))))))
 
 (defun djira-info-get-all-apps-paths ()
-  "Return the root fo all django apps. The returned value is an
-alist mapping app labels to app roots."
+  "Return the root fo all django apps.
+
+The returned value is an alist mapping app labels to app roots."
   (mapcar (lambda (x) (cons x (djira-info-get-app-path x)))
           (djira-info-get-all-apps-labels)))
 
 (defun djira-info-get-app-models (label)
   "Return the names of the models defined in the app LABEL.
+
 Names are qualified with the label of the app.
 
 Django defines both 'the name' and 'the object name' of a model.
@@ -315,10 +344,11 @@ of the class."
    (cdr (assoc 'models (cdar (djira-api-get-apps-details (list label)))))))
 
 (defun djira-info-get-all-apps-models ()
-  "Returns the names of the models defined in all the apps.
+  "Return the names of the models defined in all the apps.
+
 Names are qualified with the label of the app."
-  (reduce 'append (mapcar 'djira-info-get-app-models
-                          (djira-info-get-all-apps-labels))))
+  (cl-reduce #'append (mapcar 'djira-info-get-app-models
+                              (djira-info-get-all-apps-labels))))
 
 
 ;;;  _          _                                           _
@@ -330,7 +360,9 @@ Names are qualified with the label of the app."
 ;;; This section defines helper functions and end user commands
 
 (defun djira-buffer-belongs-in-app-p (buffer)
-  "Check whether BUFFER visits a buffer that belongs to any app
+  "Check whether BUFFER belongs to any app.
+
+Check whether BUFFER is visiting a buffer that belongs to any app
 in the running django instance. Returns the app label or nil.
 
 Note that 'setup.py' etc. are considered to be outside the app."
