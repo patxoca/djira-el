@@ -193,15 +193,14 @@ preserves 'current-buffer', 'point', 'mark' and 'match-data'."
 
 
 (defun djira--parse-json (v)
-  "Convert V to Emacs lisp data."
+  "Convert V to Emacs Lisp data."
   (json-read-from-string v))
 
 
 (defun djira--process-response-buffer ()
   "Process the djira response from the current buffer.
 
-Return the payload converted to emacs lisp types.
-"
+Return the payload converted to Emacs Lisp types."
   (let ((status-code (djira--get-status-code))
         (content-type (djira--get-content-type))
         (payload (djira--get-payload)))
