@@ -225,8 +225,10 @@ Return the payload converted to Emacs Lisp types."
 
 (defun djira--call (url)
   "Call the endpoint at URL and return the parsed result."
-  (with-current-buffer (url-retrieve-synchronously url)
-    (djira--process-response-buffer)))
+  (let ((url-request-method "GET")
+        (url-request-extra-headers '(("X-REQUESTED-WITH" . "XMLHttpRequest"))))
+    (with-current-buffer (url-retrieve-synchronously url)
+      (djira--process-response-buffer))))
 
 
 (defun djira-call (endpoint skip-cache &rest kwargs)
