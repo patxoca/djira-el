@@ -58,7 +58,7 @@
 
 
 (defvar djira-url "http://localhost:8000/__djira__/"
-  "djira's API root URL.")
+  "Root URL for djira's API.")
 
 
 ;;;  _          _
