@@ -320,7 +320,7 @@ each app separately in order to improve cache hits."
                     "/home/aroda/prog/djira/project")))))
 
 
-(ert-deftest test-djira-info-get-app-path ()
+(ert-deftest test-djira-info-get-app-root ()
   ""
   (let ((response '((admin
                      (label . "admin")
@@ -331,13 +331,13 @@ each app separately in order to improve cache hits."
                      (verbose_name . "Administration")))))
     (fpatch
      ((djira-api-get-apps-details (lambda (label) response)))
-     (should (equal (djira-info-get-app-path "admin")
+     (should (equal (djira-info-get-app-root "admin")
                     "/some/path/django/contrib/admin"))))
 
   (let ((response '((admin)))) ; read as '((admin . ())), no info available
     (fpatch
      ((djira-api-get-apps-details (lambda (label) response)))
-     (should (null (djira-info-get-app-path "admin"))))))
+     (should (null (djira-info-get-app-root "admin"))))))
 
 
 (ert-deftest test-djira-info-get-all-apps-paths ()
@@ -347,7 +347,7 @@ each app separately in order to improve cache hits."
                 ("auth" . "/some/path/django/contrib/auth"))))
     (fpatch
      ((djira-info-get-all-apps-labels (lambda () '("admin" "auth")))
-      (djira-info-get-app-path (lambda (label) (cdr (assoc label data)))))
+      (djira-info-get-app-root (lambda (label) (cdr (assoc label data)))))
      (should (equal (djira-info-get-all-apps-paths)
                     '(("admin" . "/some/path/django/contrib/admin")
                       ("auth" . "/some/path/django/contrib/auth")))))))

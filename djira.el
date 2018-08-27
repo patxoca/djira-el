@@ -351,7 +351,7 @@ the app don't define an 'AppConfig' class returns nil."
   "Return the root fo all django apps.
 
 The returned value is an alist mapping app labels to app roots."
-  (mapcar (lambda (x) (cons x (djira-info-get-app-path x)))
+  (mapcar (lambda (x) (cons x (djira-info-get-app-root x)))
           (djira-info-get-all-apps-labels)))
 
 (defun djira-info-get-app-models (label)
