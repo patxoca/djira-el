@@ -384,6 +384,71 @@ each app separately in order to improve cache hits."
                     '("foo.Model1" "foo.Model2" "bar.Model3"))))))
 
 
+(ert-deftest test-djira-info-get-settings-path ()
+  ""
+  (let ((data '((python_version . [2 7 14 "final" 0])
+                (django_settings_module . "project.settings")
+                (django_settings_path . "/some/path/project/settings.py")
+                (python . "/some/path/pyvenv/hera_impl/bin/python")
+                (django_project_root . "/some/path/prog/hera/django10/project")
+                (django_version . [1 10 8 "final" 0])
+                (django . "/some/path/pyvenv/hera_impl/lib/python2.7/site-packages/django"))))
+    (fpatch
+     ((djira-api-get-system-info (lambda () data)))
+     (should (string= (djira-info-get-settings-path)
+                      "/some/path/project/settings.py")))))
+
+
+(ert-deftest test-djira-info-get-app-class-source ()
+  ""
+  (let ((data '((djira
+                 (app_class_name . "DjiraAppConfig")
+                 (app_class_source . "/some/path/site-packages/djira/app.py")
+                 (name . "djira")
+                 (app_class_line . 16)
+                 (models . [])
+                 (path . "/some/path/site-packages/djira")
+                 (verbose_name . "djira")
+                 (label . "djira")))))
+    (fpatch
+     ((djira-api-get-apps-details (lambda (x) data)))
+     (should (equal (djira-info-get-app-class-source "djira")
+                    '("/some/path/site-packages/djira/app.py" 16 "DjiraAppConfig"))))))
+
+
+(ert-deftest test-djira-info-get-url-names ()
+  ""
+  (let ((data '((index
+                 (url_name . "index")
+                 (callback_name . "index")
+                 (callback_path . "/some/path/site-packages/django/contrib/admin/sites.py")
+                 (callback_lineno . 476))
+                (login
+                 (url_name . "login")
+                 (callback_name . "login")
+                 (callback_path . "/some/path/site-packages/django/contrib/admin/sites.py")
+                 (callback_lineno . 361))
+                (logout
+                 (url_name . "logout")
+                 (callback_name . "logout")
+                 (callback_path . "/some/path/site-packages/django/contrib/admin/sites.py")
+                 (callback_lineno . 339))
+                (password_change
+                 (url_name . "password_change")
+                 (callback_name . "password_change")
+                 (callback_path . "/some/path/site-packages/django/contrib/admin/sites.py")
+                 (callback_lineno . 300)))))
+    (fpatch
+     ((djira-api-get-urls-details (lambda () data)))
+
+     (should (equal (djira-info-get-url-names)
+                    '("index" "login" "logout" "password_change")))
+
+     (should (equal (djira-info-get-view-source "logout")
+                    '("/some/path/site-packages/django/contrib/admin/sites.py"
+                      339
+                      "logout"))))))
+
 ;;;  _          _                                           _
 ;;; | |_ ___   | |__   ___   _ __   __ _ _ __ ___   ___  __| |
 ;;; | __/ _ \  | '_ \ / _ \ | '_ \ / _` | '_ ` _ \ / _ \/ _` |
