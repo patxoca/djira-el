@@ -13,4 +13,4 @@ intended as development helpers. ``emacs-djira`` consumes those APIs
 from within emacs.
 
 For an actual example take a look at
-`arv-py-django <https://github.com/patxoca/arv-py-django>`_.
+`django-el <https://github.com/patxoca/django-el>`_.

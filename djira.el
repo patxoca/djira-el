@@ -40,8 +40,8 @@
 ;; Emacs client for djira. djira provides introspection for a running
 ;; django instance.
 ;;
-;; Currently djira-el is just a library, see the package arv-py-django
-;; (https://github.com/patxoca/arv-py-django) for an actual package
+;; Currently djira-el is just a library, see the package django-el
+;; (https://github.com/patxoca/django-el) for an actual package
 ;; leveraging djira.
 
 ;;; History:
