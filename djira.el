@@ -295,6 +295,10 @@ from. If omitted it will return information about all apps."
   "Call 'get_system_info' endpoint."
   (djira-call "get_system_info" nil))
 
+(defun djira-api-get-urls-details ()
+  "Call 'get_urls_details' endpoint."
+  (djira-call "get_urls_details" nil))
+
 
 ;;;      _  _ _             _        __
 ;;;   __| |(_|_)_ __ __ _  (_)_ __  / _| ___
@@ -314,6 +318,10 @@ In this context 'project' refers to the directory containing the
 'manage.py' command."
   (cdr (assoc 'django_project_root (djira-api-get-system-info))))
 
+(defun djira-info-get-settings-path ()
+  "Return the 'settings.py' path."
+  (cdr (assoc 'django_settings_path (djira-api-get-system-info))))
+
 (defun djira-info-get-all-apps-labels ()
   "Return a list containing the labels of all installed apps."
   (djira-api-get-apps-list))
@@ -324,6 +332,20 @@ In this context 'project' refers to the directory containing the
 In this context the root of an app is the directory containing
 'models.py' etc."
   (cdr (assoc 'path (cdar (djira-api-get-apps-details (list label))))))
+
+(defun djira-info-get-app-class-source (label)
+  "Return the location of the AppConfig class.
+
+Return a list (full-path lineno class-name) identifying the
+location of the 'AppConfig' class for the application LABEL. If
+the app don't define an 'AppConfig' class returns nil."
+  (let* ((app-info (cdar (djira-api-get-apps-details (list label))))
+         (app-root (djira-info-get-app-root label))
+         (class-path (cdr (assoc 'app_class_source app-info))))
+    (when (s-starts-with-p app-root class-path)
+      (list class-path
+            (cdr (assoc 'app_class_line app-info))
+            (cdr (assoc 'app_class_name app-info))))))
 
 (defun djira-info-get-all-apps-paths ()
   "Return the root fo all django apps.
@@ -351,6 +373,25 @@ Names are qualified with the label of the app."
   (cl-reduce #'append (mapcar 'djira-info-get-app-models
                               (djira-info-get-all-apps-labels))))
 
+(defun djira-info-get-url-names ()
+  "Return the names of all the urls."
+  (sort
+   (-non-nil
+    (mapcar (lambda (x) (cdr (assoc 'url_name (cdr x))))
+            (djira-api-get-urls-details)))
+   #'string-lessp))
+
+(defun djira-info-get-view-source (name)
+  "Return the location of the view.
+
+Return a list (full-path lineno view-name) identifying the
+location of the view named NAME, an string. Returns nil if the
+view don't exist."
+  (let ((view-info (cdr (assoc (intern name) (djira-api-get-urls-details)))))
+    (when view-info
+      (list (cdr (assoc 'callback_path view-info))
+            (cdr (assoc 'callback_lineno view-info))
+            (cdr (assoc 'callback_name view-info))))))
 
 ;;;  _          _                                           _
 ;;; | |_ ___   | |__   ___   _ __   __ _ _ __ ___   ___  __| |
