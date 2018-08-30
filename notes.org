@@ -1,0 +1,20 @@
+#+TITLE: Notes on djira-el
+#+AUTHOR: Alexis Roda
+#+EMAIL: alexis.roda.villalonga@gmail.com
+
+#+TODO: TODO(@) DONE(@)
+#+TODO: | CANC(c@)
+
+* In
+
+** update cache periodically                                     :idea:cache:
+
+Just a reminder. The cache can be updated automatically using [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Idle-Timers.html][idle
+timers]]. The update can be done asynchronously.
+
+* Done
+
+
+# Local Variables:
+# ispell-local-dictionary: "en"
+# End:
