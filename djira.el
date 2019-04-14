@@ -381,6 +381,16 @@ Names are qualified with the label of the app."
             (djira-api-get-urls-details)))
    #'string-lessp))
 
+(defun djira-info-get-url-pattern-name-alist ()
+  "Return an alist (pattern . name) of all the urls, sorted py
+pattern."
+  (sort
+   (-non-nil
+    (mapcar (lambda (x) (cons (cdr (assoc 'pattern (cdr x)))
+                         (cdr (assoc 'url_name (cdr x)))))
+            (djira-api-get-urls-details)))
+   (lambda (a b) (string-lessp (car a) (car b)))))
+
 (defun djira-info-get-view-source (name)
   "Return the location of the view.
 
