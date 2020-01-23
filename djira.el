@@ -176,11 +176,29 @@ preserves 'current-buffer', 'point', 'mark' and 'match-data'."
 
 (defun djira--get-content-type (&optional buffer)
   "Get HTTP Content-Type from BUFFER."
+  ;; https://tools.ietf.org/html/rfc7231#section-3.1.1.5
+  ;;
+  ;; Content-Type = media-type
+  ;;
+  ;; https://tools.ietf.org/html/rfc7231#section-3.1.1.1
+  ;;
+  ;; media-type = type "/" subtype *( OWS ";" OWS parameter )
+  ;; type       = token
+  ;; subtype    = token
+  ;;
+  ;; https://tools.ietf.org/html/rfc7230#section-3.2.6
+  ;;
+  ;; token     = 1*tchar
+  ;; tchar     = "!" / "#" / "$" / "%" / "&" / "'" / "*"
+  ;;           / "+" / "-" / "." / "^" / "_" / "`" / "|" / "~"
+  ;;           / DIGIT / ALPHA
   (djira--with-response-buffer
    buffer
-   (if (search-forward-regexp "^Content-Type: \\([^ ]+\\)$" nil t)
-       (match-string 1)
-     (error "Unsupported HTTP Content-Type format"))))
+   (let* ((token "[-!#$%%&'*+.^_`|~[:digit:][:alpha:]]+")
+          (ctre (format "^Content-Type: \\(%s/%s\\)" token token)))
+     (if (search-forward-regexp ctre nil t)
+         (match-string 1)
+       (error "Unsupported HTTP Content-Type format")))))
 
 
 (defun djira--get-payload (&optional buffer)
