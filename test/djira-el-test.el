@@ -90,7 +90,7 @@ Server: WSGIServer/0.2 CPython/3.6.4"
     (example
      "HTTP/1.0 200 OK
 Date: Thu, 23 Aug 2018 12:31:55 GMT
-Content-Type: text/html
+Content-Type: text/html; foo=bar
 Server: WSGIServer/0.2 CPython/3.6.4"
      "text/html")
 
