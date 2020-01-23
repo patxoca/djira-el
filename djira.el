@@ -165,6 +165,37 @@ preserves 'current-buffer', 'point', 'mark' and 'match-data'."
         ,@body))))
 
 
+(defconst djira--debug-level-tag
+  '((debug   "DEBUG"   (:foreground "cyan"   :weight bold))
+    (info    "INFO"    (:foreground "green"  :weight bold))
+    (warning "WARNING" (:foreground "orange" :weight bold))
+    (error   "ERROR"   (:foreground "red"    :weight bold))))
+
+
+(defun djira--debug-log-response-buffer (level mssg &optional args include-response)
+  "Write the response buffer to *Messages*."
+  (let ((response (djira--with-response-buffer
+                   (current-buffer)
+                   (buffer-substring-no-properties (point-min) (point-max))))
+        (foo (cdr (assoc level djira--debug-level-tag))))
+    (with-current-buffer (get-buffer-create "*djira-log*")
+      (font-lock-mode nil)
+      (read-only-mode)
+      (let ((buffer-read-only nil))
+        (insert
+         (propertize (car foo) 'font-lock-face (cadr foo))
+         ":"
+         (format-time-string "%Y-%m-%d %T")
+         ":"
+         (apply #'format (cons mssg args))
+         "\n")
+        (when include-response
+          (insert
+           "==[ HTTP response ]======================================\n"
+           response
+           "=========================================================\n"))))))
+
+
 (defun djira--get-status-code (&optional buffer)
   "Get HTTP response status from BUFFER."
   (djira--with-response-buffer
