@@ -12,6 +12,25 @@
 Just a reminder. The cache can be updated automatically using [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Idle-Timers.html][idle
 timers]]. The update can be done asynchronously.
 
+** replace =assoc= with =let-alist=
+
+This:
+
+#+begin_src emacs-lisp
+  (let-alist app-info
+    (list class-path
+          .app_class_line
+          .app_class_name))
+#+end_src
+
+is cleaner than this:
+
+#+begin_src emacs-lisp
+  (list class-path
+        (cdr (assoc 'app_class_line app-info))
+        (cdr (assoc 'app_class_name app-info)))
+#+end_src
+
 * Done
 
 
