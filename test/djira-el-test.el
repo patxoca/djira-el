@@ -1,7 +1,7 @@
 ;;; djira-el-test.el --- Tests for djira-el
 ;;; -*- lexical-binding: t -*-
 
-(require 'cl)
+(require 'cl-lib)
 (require 'ert)
 
 (require 'djira)
