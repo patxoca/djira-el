@@ -31,6 +31,37 @@ is cleaner than this:
         (cdr (assoc 'app_class_name app-info)))
 #+end_src
 
+** use json parsing available on emacs 27.1                            :idea:
+
+Check if the values returned by =json-parse-string= are compatible
+with those returned by =json-read-from-string=. Thinking about the
+kind of data structures they use (lists vs. arrays by the way).
+
+** fix test error with emacs 27.1                                       :bug:
+
+Tests pass with emacs 26.3.
+
+#+begin_src text
+  alex@wst:djira-el.bak$ EMACS=emacs-27.1 cask exec ert-runner
+  CPU profiler started
+  ..........Test test-djira--process-response-buffer backtrace:
+
+
+  Test test-djira--process-response-buffer condition:
+
+      (json-parse-error "'[' or '{' expected near '42'" "<string>" 1 2 2)
+
+  F............
+
+  Ran 23 tests in 0.107 seconds
+  1 unexpected results:
+     FAILED  test-djira--process-response-buffer
+
+  CPU profiler stopped
+  Profile saved as to file ert-profile
+  Use ‘profiler-find-profile’ to view
+#+end_src
+
 * Done
 
 
