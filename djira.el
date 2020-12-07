@@ -243,7 +243,10 @@ preserves 'current-buffer', 'point', 'mark' and 'match-data'."
 
 (defun djira--parse-json (v)
   "Convert V to Emacs Lisp data."
-  (json-read-from-string v))
+  ;; NOTE: json serializes False as :json-false in order to
+  ;; distinguish if from the empty list.
+  (let ((json-false nil))
+    (json-read-from-string v)))
 
 
 (defun djira--process-response-buffer ()
