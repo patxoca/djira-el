@@ -458,6 +458,20 @@ view don't exist."
             (cdr (assoc 'callback_lineno view-info))
             (cdr (assoc 'callback_name view-info))))))
 
+(defun djira-info-get-model-fields (name)
+  "Returns a list describing the fields of the model NAME.
+
+NAME is a dotted name 'app_label.model_name'. Returns a list
+containing information about the fields of the model NAME. Each
+element is an association list mapping field atributes to values.
+
+The fields are attname, blank, choices, column, default,
+description, editable, empty_strings_allowed, help_text, hidden,
+max_length, name, null, primary_key, unique, unique_for_date,
+unique_for_month, unique_for_year and verbose_name."
+  (mapcar (lambda (x) (cdr x))
+          (cdr (assoc 'fields (djira-api-get-model-details name)))))
+
 ;;;  _          _                                           _
 ;;; | |_ ___   | |__   ___   _ __   __ _ _ __ ___   ___  __| |
 ;;; | __/ _ \  | '_ \ / _ \ | '_ \ / _` | '_ ` _ \ / _ \/ _` |
