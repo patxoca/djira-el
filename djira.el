@@ -351,6 +351,9 @@ from. If omitted it will return information about all apps."
   "Call 'get_urls_details' endpoint."
   (djira-call "get_urls_details" nil))
 
+(defun djira-api-get-model-details (dotted-model-name)
+  "Call 'get_model_details' endpoint."
+  (djira-call "get_model_details" nil :model dotted-model-name))
 
 ;;;      _  _ _             _        __
 ;;;   __| |(_|_)_ __ __ _  (_)_ __  / _| ___
