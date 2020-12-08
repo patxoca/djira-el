@@ -464,13 +464,18 @@ view don't exist."
 NAME is a dotted name 'app_label.model_name'. Returns a list
 containing information about the fields of the model NAME. Each
 element is an association list mapping field atributes to values.
+The fields appear in the list in the same order that they appear
+in the model definition.
 
 The fields are attname, blank, choices, column, default,
 description, editable, empty_strings_allowed, help_text, hidden,
 max_length, name, null, primary_key, unique, unique_for_date,
 unique_for_month, unique_for_year and verbose_name."
-  (mapcar (lambda (x) (cdr x))
-          (cdr (assoc 'fields (djira-api-get-model-details name)))))
+  (let* ((model (djira-api-get-model-details name))
+         (ordered-field-names (cdr (assoc 'concrete_fields model)))
+         (field-alist (cdr (assoc 'fields model))))
+    (mapcar (lambda (x) (cdr (assoc-string x field-alist)))
+            ordered-field-names)))
 
 ;;;  _          _                                           _
 ;;; | |_ ___   | |__   ___   _ __   __ _ _ __ ___   ___  __| |
